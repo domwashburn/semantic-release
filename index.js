@@ -123,22 +123,23 @@ async function run(options, plugins) {
     return;
   }
 
-  const version = getNextVersion(branch, type, lastRelease, logger);
+  const nextVersion = getNextVersion(branch, type, lastRelease, logger);
+  const versionNumber = semver.valid(semver.coerce(nextVersion))
 
-  if (!semver.satisfies(version, branch.range)) {
-    throw getError('EINVALIDNEXTVERSION', {version, branch});
+  if (!semver.satisfies(versionNumber, branch.range)) {
+    throw getError('EINVALIDNEXTVERSION', { versionNumber, branch });
   }
 
   const nextRelease = {
     type,
-    version,
+    version: nextVersion,
     channel,
     gitHead: await getGitHead(),
-    gitTag: makeTag(options.tagFormat, version, channel),
-    name: makeTag(options.tagFormat, version),
+    gitTag: makeTag(options.tagFormat, nextVersion, channel),
+    name: makeTag(options.tagFormat, nextVersion),
   };
 
-  await plugins.verifyRelease({options, logger, branch, lastRelease, commits, nextRelease});
+  await plugins.verifyRelease({ options, logger, branch, lastRelease, commits, nextRelease });
 
   const generateNotesParam = {options, branch, lastRelease, commits, nextRelease, logger};
 
